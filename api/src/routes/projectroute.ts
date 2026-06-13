@@ -1,0 +1,20 @@
+import {createProject ,getProjects, getProjectUpdate,getProjectDelete ,getProjectById, getProjectMembers } from "../controllers/project";
+import {protect} from "../middleware/authmiddleware"
+import express from "express";
+
+
+
+const router = express.Router();
+
+router.post("/", protect, createProject);
+router.get("/", protect, getProjects);
+
+router.get("/members", protect,  getProjectMembers);
+
+router.get("/:id", protect, getProjectById);
+
+router.put("/:id", protect, getProjectUpdate);
+router.delete("/:id", protect, getProjectDelete);
+
+
+export default router;
