@@ -6,10 +6,11 @@
   "author": "",
   "type": "commonjs",
   "main": "index.js",
-  "scripts": {
+   "scripts": {
   "dev": "nodemon --exec ts-node src/server.ts",
-  "start": "ts-node src/server.ts"
+  "start": "npx ts-node src/server.ts"
 },
+
 
   "dependencies": {
     "bcryptjs": "^3.0.3",
