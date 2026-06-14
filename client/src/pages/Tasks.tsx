@@ -11,7 +11,7 @@ function Tasks() {
   useEffect(() => {
     const fetchTasks = async () => {
       try {
-        const res = await taskApi.get("/"); // ✅ GET ALL TASKS
+        const res = await taskApi.get("/tasks"); // ✅ GET ALL TASKS
         setTasks(res.data);
       } catch (error) {
         console.error("Failed to load tasks:", error);

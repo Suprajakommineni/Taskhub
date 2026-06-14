@@ -16,7 +16,7 @@ const [status, setStatus] = useState("Available");
 
 const saveMember = async () => {
   try {
-    await teamApi.post("/", {
+    await teamApi.post("/team", {
       username,
       email,
       role,

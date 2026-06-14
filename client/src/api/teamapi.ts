@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const teamApi = axios.create({
-  baseURL: "http://localhost:5000/api/team",
+  baseURL: import.meta.env.VITE_API_URL
 });
 
 teamApi.interceptors.request.use((config) => {
