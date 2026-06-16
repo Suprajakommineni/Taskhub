@@ -50,7 +50,7 @@ useEffect(() => {
   const fetchDashboard = async () => {
     try {
      const [summaryRes, projectsRes] = await Promise.all([
-  API.get("/dashboard/summary"),
+  API.get("/api/dashboard/summary"),
   projectApi.get("/"),
 ]);
 

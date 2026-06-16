@@ -43,8 +43,8 @@ function DashboardLayout({
     const loadHeaderData = async () => {
       try {
         const [userRes, notificationRes] = await Promise.all([
-          API.get("/users/me"),
-          API.get("/notifications"),
+          API.get("/api/users/me"),
+          API.get("/api/notifications"),
         ]);
 
         setUser({
