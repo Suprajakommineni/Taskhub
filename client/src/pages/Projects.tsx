@@ -54,6 +54,7 @@ const mapProject = (project: BackendProject): Project => ({
 const fetchProjects = async () => {
   try {
     const res = await projectApi.get("/api/projects");
+    
     setProjects(res.data.map(mapProject));
   } catch (error) {
     console.error(error);
