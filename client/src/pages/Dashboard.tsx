@@ -9,8 +9,9 @@ import API from "../api/api";
 interface Project {
   _id: string;
   name: string;
-  progress: number;
-  tasks: number;
+  description: string;
+  status: string;
+  members?: string[];
 }
 
 function Dashboard() {
@@ -20,7 +21,9 @@ function Dashboard() {
   const [members, setMembers] = useState<string[]>([]);
 
   const totalMembers = new Set(
-  projects.flatMap((project: any) => project.members || [])
+  (Array.isArray(projects) ? projects : []).flatMap(
+    (project) => project.members || []
+  )
 ).size;
 
 useEffect(() => {
