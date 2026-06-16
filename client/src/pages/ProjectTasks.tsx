@@ -45,24 +45,25 @@ function ProjectTasks() {
 
   // FETCH TASKS
   const fetchTasks = async () => {
-    if (!projectId) return;
+  if (!projectId) return;
 
-    try {
-      const res = await taskApi.get(`/api/projects/${projectId}`);
+  try {
+    const res = await taskApi.get(`/api/projects/${projectId}`);
 
-console.log("PROJECT TASK RESPONSE:", res.data);
+    console.log("PROJECT ID:", projectId);
+    console.log("TASK API RESPONSE:", res.data);
 
-setTasks(
-  Array.isArray(res.data)
-    ? res.data
-    : Array.isArray(res.data.tasks)
-    ? res.data.tasks
-    : []
-);
-    } catch (error) {
-      console.error("error",error);
-    }
-  };
+    setTasks(
+      Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data.tasks)
+        ? res.data.tasks
+        : []
+    );
+  } catch (error) {
+    console.error("FETCH TASKS ERROR:", error);
+  }
+};
 
   useEffect(() => {
     const init = async () => {
