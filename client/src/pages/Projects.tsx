@@ -280,7 +280,7 @@ if (loading) {
               </p>
 
               <Link
-                to={`api/projects/${project.id}/tasks`}
+                to={`/projects/${project.id}/tasks`}
                 className="flex items-center gap-2 text-[#0b46bc] font-bold"
               >
                 View Tasks
