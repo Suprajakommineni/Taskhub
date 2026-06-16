@@ -12,6 +12,8 @@ interface Project {
   description: string;
   status: string;
   members?: string[];
+  progress?: number;
+  tasks?: number;
 }
 
 function Dashboard() {
