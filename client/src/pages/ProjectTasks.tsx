@@ -48,10 +48,10 @@ function ProjectTasks() {
     if (!projectId) return;
 
     try {
-      const res = await taskApi.get(`/api/project/${projectId}`);
+      const res = await taskApi.get(`/api/projects/${projectId}`);
       setTasks(res.data);
     } catch (error) {
-      console.error(error);
+      console.error("error",error);
     }
   };
 
