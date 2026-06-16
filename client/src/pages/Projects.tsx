@@ -118,9 +118,9 @@ if (loading) {
       : 0,
 };
       if (editingProjectId) {
-        await projectApi.put(`/${editingProjectId}`, payload);
+        projectApi.put(`/api/projects/${editingProjectId}`, payload)
       } else {
-        await projectApi.post("/", payload);
+        projectApi.post("/api/projects", payload)
       }
 
       await fetchProjects();
@@ -148,7 +148,7 @@ if (loading) {
     if (!confirmDelete) return;
 
     try {
-      await projectApi.delete(`/${projectId}`);
+      projectApi.delete(`/api/projects/${projectId}`)
       await fetchProjects();
     } catch (error) {
       console.error("Failed to delete project", error);
