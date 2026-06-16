@@ -26,7 +26,7 @@ function Dashboard() {
 useEffect(() => {
   const fetchMembers = async () => {
     try {
-      const res = await projectApi.get("/members");
+      const res = await projectApi.get("api/projects/members");
       setMembers(res.data || []);
     } catch (err) {
       console.error("Dashboard members error:", err);
