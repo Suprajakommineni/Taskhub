@@ -106,9 +106,9 @@ function ProjectTasks() {
       };
 
       if (editingTaskId) {
-        await taskApi.put(`/${editingTaskId}`, payload);
+        await taskApi.put(`/api/tasks/${editingTaskId}`, payload);
       } else {
-        await taskApi.post("/", payload);
+        await taskApi.post("/api/tasks", payload);
       }
 
       await fetchTasks();
@@ -132,7 +132,7 @@ function ProjectTasks() {
 
   const deleteTask = async (taskId: string) => {
     try {
-      await taskApi.delete(`/${taskId}`);
+      await taskApi.delete(`/api/tasks/${taskId}`);
       await fetchTasks();
     } catch (error) {
       console.error(error);
