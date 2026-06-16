@@ -181,21 +181,25 @@ function ProjectTasks() {
         <div className="bg-white rounded-3xl p-6 shadow-sm">
           <p className="text-slate-500">Completed</p>
           <h2 className="text-2xl font-bold">
-            {tasks.filter((t) => t.status === "Completed").length}
+            {(Array.isArray(tasks) ? tasks : []).filter(
+  (t) => t.status === "Completed"
+).length}
           </h2>
         </div>
 
         <div className="bg-white rounded-3xl p-6 shadow-sm">
           <p className="text-slate-500">Running</p>
           <h2 className="text-2xl font-bold">
-            {tasks.filter((t) => t.status !== "Completed").length}
+            {(Array.isArray(tasks) ? tasks : []).filter(
+  (t) => t.status !== "Completed"
+).length}
           </h2>
         </div>
       </div>
 
       {/* TASK LIST */}
       <div className="grid gap-5">
-        {tasks.map((task) => (
+        {(Array.isArray(tasks) ? tasks : []).map((task) => (
           <div
             key={task._id}
             className="bg-white rounded-3xl shadow-sm hover:shadow-md transition p-6 flex justify-between items-center"
