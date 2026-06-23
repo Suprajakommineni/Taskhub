@@ -117,7 +117,7 @@ setTasks(Array.isArray(res.data) ? res.data : []);
       };
 
       if (editingTaskId) {
-  const res = await taskApi.put(`/api/tasks/${editingTaskId}`, payload);
+  const res = await taskApi.put(`/${editingTaskId}`, payload);
   window.dispatchEvent(
   new CustomEvent("dashboard-refresh")
 );
@@ -126,7 +126,7 @@ setTasks(Array.isArray(res.data) ? res.data : []);
     prev.map(t => (t._id === editingTaskId ? res.data : t))
   );
 } else {
-  const res = await taskApi.post("/api/tasks", payload);
+  const res = await taskApi.post("/", payload);
   window.dispatchEvent(
   new CustomEvent("dashboard-refresh")
 );
@@ -150,7 +150,7 @@ setTasks(Array.isArray(res.data) ? res.data : []);
 
   const deleteTask = async (taskId: string) => {
     try {
-      await taskApi.delete(`/api/tasks/${taskId}`);
+      await taskApi.delete(`/${taskId}`);
       window.dispatchEvent(
   new CustomEvent("dashboard-refresh")
 );

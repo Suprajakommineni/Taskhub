@@ -1,10 +1,10 @@
 import axios from "axios";
 
-const TaskApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL
+const taskApi = axios.create({
+  baseURL: `${import.meta.env.VITE_API_URL}/api/tasks`,
 });
 
-TaskApi.interceptors.request.use((config) => {
+taskApi.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
 
   if (token) {
@@ -14,4 +14,4 @@ TaskApi.interceptors.request.use((config) => {
   return config;
 });
 
-export default TaskApi;
+export default taskApi;
