@@ -53,7 +53,7 @@ const mapProject = (project: BackendProject): Project => ({
 
 const fetchProjects = async () => {
   try {
-    const res = await projectApi.get("/api/projects");
+    const res = await projectApi.get("/");
     
     setProjects(res.data.map(mapProject));
   } catch (error) {
@@ -119,7 +119,7 @@ if (loading) {
 };
       if (editingProjectId) {
   await projectApi.put(
-    `/api/projects/${editingProjectId}`,
+    `/${editingProjectId}`,
     payload
   );
   window.dispatchEvent(
@@ -127,7 +127,7 @@ if (loading) {
 );
 } else {
   await projectApi.post(
-    "/api/projects",
+    "/",
     payload
   );
   window.dispatchEvent(
@@ -160,7 +160,7 @@ await fetchProjects();
     if (!confirmDelete) return;
 
     try {
-      projectApi.delete(`/api/projects/${projectId}`)
+      projectApi.delete(`/${projectId}`)
       window.dispatchEvent(
   new CustomEvent("dashboard-refresh")
 );
