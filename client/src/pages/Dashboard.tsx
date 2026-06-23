@@ -45,7 +45,7 @@ function Dashboard() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const res = await projectApi.get("api/projects/members");
+        const res = await projectApi.get("/members");
 
         setMembers(
           Array.isArray(res.data)
