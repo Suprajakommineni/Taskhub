@@ -92,7 +92,8 @@ function Dashboard() {
     ]);
     console.log("Dashboard Summary:", summaryRes.data);
 console.log("Projects Response:", projectsRes.data);
-
+console.log("Project API Base URL:", projectApi.defaults.baseURL);
+console.log("Projects Response:", projectsRes.data);
     setData(
       summaryRes.data || {
         totalProjects: 0,
