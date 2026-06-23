@@ -48,12 +48,11 @@ function ProjectTasks() {
   if (!projectId) return;
 
   try {
-    const res = await taskApi.get(`api/projects/${projectId}`);
+    const res = await taskApi.get(`/project/${projectId}`);
 
-    console.log("PROJECT ID:", projectId);
-    console.log("TASK API RESPONSE:", res.data);
-    console.log("PROJECT RESPONSE:", res.data);
-console.log("PROJECT TASKS:", res.data.tasks);
+console.log("TASKS:", res.data);
+
+setTasks(Array.isArray(res.data) ? res.data : []);
 
     setTasks(
       Array.isArray(res.data)
