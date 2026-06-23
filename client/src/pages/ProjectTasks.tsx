@@ -48,7 +48,7 @@ function ProjectTasks() {
   if (!projectId) return;
 
   try {
-    const res = await taskApi.get(`/projects/${projectId}`);
+    const res = await taskApi.get(`api/projects/${projectId}`);
 
     console.log("PROJECT ID:", projectId);
     console.log("TASK API RESPONSE:", res.data);
