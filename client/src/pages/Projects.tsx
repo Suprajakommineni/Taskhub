@@ -118,12 +118,18 @@ if (loading) {
       : 0,
 };
       if (editingProjectId) {
-        projectApi.put(`/api/projects/${editingProjectId}`, payload)
-      } else {
-        projectApi.post("/api/projects", payload)
-      }
+  await projectApi.put(
+    `/api/projects/${editingProjectId}`,
+    payload
+  );
+} else {
+  await projectApi.post(
+    "/api/projects",
+    payload
+  );
+}
 
-      await fetchProjects();
+await fetchProjects();
     } catch (error) {
       console.error("Failed to save project", error);
       alert("Failed to save project. Please try again.");
