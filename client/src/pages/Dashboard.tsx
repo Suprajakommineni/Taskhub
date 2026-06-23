@@ -90,6 +90,8 @@ function Dashboard() {
       API.get("/api/dashboard/summary"),
       projectApi.get("/"),
     ]);
+    console.log("Dashboard Summary:", summaryRes.data);
+console.log("Projects Response:", projectsRes.data);
 
     setData(
       summaryRes.data || {
@@ -115,10 +117,12 @@ function Dashboard() {
     setLoading(false);
   }
 }
+console.log(projects);
   useEffect(() => {
 
     fetchDashboard();
   }, []);
+  
 
   const stats = [
     ["Total Projects", data.totalProjects],
@@ -180,7 +184,7 @@ function Dashboard() {
                 />
                 
               ))}
-              console.log(project);
+              
           </div>
         </div>
 
