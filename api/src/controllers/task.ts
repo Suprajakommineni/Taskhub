@@ -1,37 +1,44 @@
 import { Request, Response } from "express";
 import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
+import User from "../models/usersmodel";
 
-/**
 
-* CREATE TASK
-  */
-  export const createTask = async (req: any, res: Response) => {
+export const createTask = async (req: any, res: Response) => {
   try {
-  const task = await Task.create({
-  ...req.body,
-  createdBy: req.user.id,
-  });
+    let assignedUser = null;
 
-  await Project.findByIdAndUpdate(task.project, {
-  $inc: { tasks: 1 },
-  });
+    if (req.body.assignedTo) {
+      assignedUser = await User.findOne({
+        username: req.body.assignedTo,
+      });
+    }
 
-  res.status(201).json(task);
+    const task = await Task.create({
+      ...req.body,
+      assignedTo: assignedUser?._id || null,
+      createdBy: req.user.id,
+    });
+
+    await Project.findByIdAndUpdate(task.project, {
+      $inc: { tasks: 1 },
+    });
+
+    const populatedTask = await Task.findById(task._id)
+      .populate("project", "name")
+      .populate("assignedTo", "username");
+
+    res.status(201).json(populatedTask);
   } catch (error: any) {
-  console.error("CREATE TASK ERROR:", error);
+    console.error("CREATE TASK ERROR:", error);
 
-  res.status(500).json({
-  message: "Task creation failed",
-  error: error.message,
-  });
+    res.status(500).json({
+      message: "Task creation failed",
+      error: error.message,
+    });
   }
-  };
+};
 
-/**
-
-* GET ALL TASKS OF LOGGED IN USER
-  */
   export const getTasks = async (req: any, res: Response) => {
     
   try {
