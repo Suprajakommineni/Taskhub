@@ -40,30 +40,36 @@ function DashboardLayout({
   const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
-    const loadHeaderData = async () => {
-      try {
-        const [userRes, notificationRes] = await Promise.all([
-          API.get("/api/users/me"),
-          API.get("/api/notifications"),
-        ]);
+  const loadHeaderData = async () => {
+    try {
+      const [userRes, notificationRes] = await Promise.all([
+        API.get("/api/users/me"),
+        API.get("/api/notifications"),
+      ]);
 
-        setUser({
-          username: userRes.data.username || "",
-          email: userRes.data.email || "",
-        });
+      setUser({
+        username: userRes.data.username || "",
+        email: userRes.data.email || "",
+      });
 
-        setNotifications(
-          Array.isArray(notificationRes.data)
-            ? notificationRes.data
-            : []
-        );
-      } catch (error) {
-        console.error("Header Data Error:", error);
-      }
-    };
+      setNotifications(
+        Array.isArray(notificationRes.data)
+          ? notificationRes.data
+          : []
+      );
+    } catch (error) {
+      console.error("Header Data Error:", error);
+    }
+  };
 
+  loadHeaderData();
+
+  const interval = setInterval(() => {
     loadHeaderData();
-  }, []);
+  }, 30000); // refresh every 30 seconds
+
+  return () => clearInterval(interval);
+}, []);
 
   const menuItems = [
     {

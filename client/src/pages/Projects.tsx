@@ -122,11 +122,17 @@ if (loading) {
     `/api/projects/${editingProjectId}`,
     payload
   );
+  window.dispatchEvent(
+  new CustomEvent("dashboard-refresh")
+);
 } else {
   await projectApi.post(
     "/api/projects",
     payload
   );
+  window.dispatchEvent(
+  new CustomEvent("dashboard-refresh")
+);
 }
 
 await fetchProjects();
@@ -155,6 +161,9 @@ await fetchProjects();
 
     try {
       projectApi.delete(`/api/projects/${projectId}`)
+      window.dispatchEvent(
+  new CustomEvent("dashboard-refresh")
+);
       await fetchProjects();
     } catch (error) {
       console.error("Failed to delete project", error);

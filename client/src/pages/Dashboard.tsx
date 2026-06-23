@@ -64,32 +64,58 @@ function Dashboard() {
   }, []);
 
   useEffect(() => {
+  const handleRefresh = () => {
+    fetchDashboard();
+  };
+
+  window.addEventListener(
+    "dashboard-refresh",
+    handleRefresh
+  );
+
+  return () => {
+    window.removeEventListener(
+      "dashboard-refresh",
+      handleRefresh
+    );
+  };
+}, []);
+
+  
     const fetchDashboard = async () => {
-      try {
-        const [summaryRes, projectsRes] = await Promise.all([
-          API.get("/api/dashboard/summary"),
-          projectApi.get("/"),
-        ]);
+  try {
+    setLoading(true);
 
-        console.log("Dashboard Summary:", summaryRes.data);
-        console.log("Projects Response:", projectsRes.data);
+    const [summaryRes, projectsRes] = await Promise.all([
+      API.get("/api/dashboard/summary"),
+      projectApi.get("/"),
+    ]);
 
-        setData(summaryRes.data || {});
-
-        const projectsData = Array.isArray(projectsRes.data)
-          ? projectsRes.data
-          : Array.isArray(projectsRes.data?.projects)
-          ? projectsRes.data.projects
-          : [];
-
-        setProjects(projectsData);
-      } catch (err) {
-        console.error("Dashboard Error:", err);
-        setProjects([]);
-      } finally {
-        setLoading(false);
+    setData(
+      summaryRes.data || {
+        totalProjects: 0,
+        totalTasks: 0,
+        completedTasks: 0,
+        runningTasks: 0,
+        pendingTasks: 0,
       }
-    };
+    );
+
+    const projectsData = Array.isArray(projectsRes.data)
+      ? projectsRes.data
+      : Array.isArray(projectsRes.data?.projects)
+      ? projectsRes.data.projects
+      : [];
+
+    setProjects(projectsData);
+  } catch (err) {
+    console.error("Dashboard Error:", err);
+    setProjects([]);
+  } finally {
+    setLoading(false);
+  }
+}
+  useEffect(() => {
 
     fetchDashboard();
   }, []);
@@ -152,7 +178,9 @@ function Dashboard() {
                   style={{ height: `${project.progress || 0}%` }}
                   title={`${project.name}: ${project.progress || 0}%`}
                 />
+                
               ))}
+              console.log(project);
           </div>
         </div>
 
@@ -195,6 +223,7 @@ function Dashboard() {
 
         <div className="grid md:grid-cols-3 gap-5">
           {(Array.isArray(projects) ? projects : [])
+              .reverse()
             .slice(0, 3)
             .map((project) => (
               <div

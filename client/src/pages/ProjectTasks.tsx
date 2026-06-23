@@ -116,15 +116,22 @@ function ProjectTasks() {
       };
 
       if (editingTaskId) {
-        await taskApi.put(`/api/tasks/${editingTaskId}`, payload);
-      } else {
-        await taskApi.post("/api/tasks", payload);
-      }
+  const res = await taskApi.put(`/api/tasks/${editingTaskId}`, payload);
+  window.dispatchEvent(
+  new CustomEvent("dashboard-refresh")
+);
 
-      await fetchTasks();
-      resetForm();
-      setShowModal(false);
-    } catch (error: any) {
+  setTasks(prev =>
+    prev.map(t => (t._id === editingTaskId ? res.data : t))
+  );
+} else {
+  const res = await taskApi.post("/api/tasks", payload);
+  window.dispatchEvent(
+  new CustomEvent("dashboard-refresh")
+);
+
+  setTasks(prev => [...prev, res.data]);
+}} catch (error: any) {
       console.error("TASK ERROR:", error?.response?.data || error);
       alert(error?.response?.data?.message || "Task failed");
     }
@@ -143,6 +150,9 @@ function ProjectTasks() {
   const deleteTask = async (taskId: string) => {
     try {
       await taskApi.delete(`/api/tasks/${taskId}`);
+      window.dispatchEvent(
+  new CustomEvent("dashboard-refresh")
+);
       await fetchTasks();
     } catch (error) {
       console.error(error);
