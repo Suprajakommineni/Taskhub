@@ -3,13 +3,20 @@ import Project from "../models/projectmodel";
 import User from "../models/usersmodel";
 import { Request, Response } from "express";
 
-export const getDashboardSummary = async (req: Request, res: Response) => {
+export const getDashboardSummary = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const userId = (req as any).user.id;
 
-    const totalProjects = await Project.countDocuments({ createdBy: userId });
+    const totalProjects = await Project.countDocuments({
+      createdBy: userId,
+    });
 
-    const totalTasks = await Task.countDocuments({ createdBy: userId });
+    const totalTasks = await Task.countDocuments({
+      createdBy: userId,
+    });
 
     const completedTasks = await Task.countDocuments({
       createdBy: userId,
@@ -21,15 +28,24 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
       status: "Pending",
     });
 
-    // STEP 1: get assigned user IDs safely
+    const runningTasks = await Task.countDocuments({
+  createdBy: userId,
+  status: "Running",
+});
+
     const tasks = await Task.find({
       createdBy: userId,
       assignedTo: { $ne: null },
     }).select("assignedTo");
 
-    const memberIds = tasks.map((t) => t.assignedTo);
+    const memberIds = [
+      ...new Set(
+        tasks
+          .map((t: any) => t.assignedTo?.toString())
+          .filter(Boolean)
+      ),
+    ];
 
-    // STEP 2: get usernames
     const users = await User.find({
       _id: { $in: memberIds },
     }).select("username");
@@ -41,11 +57,14 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
       totalTasks,
       completedTasks,
       pendingTasks,
-      teamMembers: usernames, // ✅ ONLY USERNAMES
+      runningTasks,
+      teamMembers: usernames,
     });
   } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+    console.error("Dashboard Summary Error:", err);
+
+    res.status(500).json({
+      message: err.message,
+    });
   }
 };
-
