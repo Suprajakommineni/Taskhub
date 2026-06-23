@@ -90,53 +90,55 @@ setTasks(Array.isArray(res.data) ? res.data : []);
     setShowModal(true);
   };
 
-  // ✅ FIXED SAVE TASK (NO 400/500)
-  const saveTask = async () => {
-    try {
-      if (!projectId) {
-        alert("Project ID missing");
-        return;
-      }
-
-      if (!taskTitle.trim()) {
-        alert("Task name required");
-        return;
-      }
-
-      const payload = {
-        name: taskTitle.trim(),
-        status,
-        priority,
-        project: projectId,
-
-        // IMPORTANT: backend expects ObjectId (keep null for now)
-        assignedTo: null,
-
-        // SAFE dueDate handling
-        dueDate: dueDate ? new Date(dueDate) : new Date(),
-      };
-
-      if (editingTaskId) {
-  const res = await taskApi.put(`/${editingTaskId}`, payload);
-  window.dispatchEvent(
-  new CustomEvent("dashboard-refresh")
-);
-
-  setTasks(prev =>
-    prev.map(t => (t._id === editingTaskId ? res.data : t))
-  );
-} else {
-  const res = await taskApi.post("/", payload);
-  window.dispatchEvent(
-  new CustomEvent("dashboard-refresh")
-);
-
-  setTasks(prev => [...prev, res.data]);
-}} catch (error: any) {
-      console.error("TASK ERROR:", error?.response?.data || error);
-      alert(error?.response?.data?.message || "Task failed");
+ const saveTask = async () => {
+  try {
+    if (!projectId) {
+      alert("Project ID missing");
+      return;
     }
-  };
+
+    if (!taskTitle.trim()) {
+      alert("Task name required");
+      return;
+    }
+
+    const payload = {
+      name: taskTitle.trim(),
+      status,
+      priority,
+      project: projectId,
+      assignedTo: assignedToName,
+      dueDate: dueDate ? new Date(dueDate) : new Date(),
+    };
+
+    if (editingTaskId) {
+      const res = await taskApi.put(`/${editingTaskId}`, payload);
+
+      setTasks(prev =>
+        prev.map(t =>
+          t._id === editingTaskId ? res.data : t
+        )
+      );
+    } else {
+      const res = await taskApi.post("/", payload);
+
+      setTasks(prev => [...prev, res.data]);
+    }
+
+    await fetchTasks();
+
+    resetForm();
+    setShowModal(false);
+
+    window.dispatchEvent(
+      new CustomEvent("dashboard-refresh")
+    );
+
+  } catch (error: any) {
+    console.error("TASK ERROR:", error?.response?.data || error);
+    alert(error?.response?.data?.message || "Task failed");
+  }
+};
 
   const editTask = (task: Task) => {
     setEditingTaskId(task._id);
