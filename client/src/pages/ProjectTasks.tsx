@@ -52,6 +52,8 @@ function ProjectTasks() {
 
     console.log("PROJECT ID:", projectId);
     console.log("TASK API RESPONSE:", res.data);
+    console.log("PROJECT RESPONSE:", res.data);
+console.log("PROJECT TASKS:", res.data.tasks);
 
     setTasks(
       Array.isArray(res.data)
