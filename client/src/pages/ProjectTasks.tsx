@@ -134,10 +134,13 @@ setTasks(Array.isArray(res.data) ? res.data : []);
       new CustomEvent("dashboard-refresh")
     );
 
-  } catch (error: any) {
-    console.error("TASK ERROR:", error?.response?.data || error);
-    alert(error?.response?.data?.message || "Task failed");
-  }
+  } 
+    catch (error: any) {
+  console.error("URL:", error.config?.url);
+  console.error("METHOD:", error.config?.method);
+  console.error("ERROR:", error.response?.data);
+}
+  
 };
 
   const editTask = (task: Task) => {
