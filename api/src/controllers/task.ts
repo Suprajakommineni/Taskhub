@@ -3,28 +3,21 @@ import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
 import User from "../models/usermodel";
 
+/**
+ * CREATE TASK
+ */
 export const createTask = async (req: any, res: Response) => {
   try {
-    let assignedUser = null;
-
-    if (req.body.assignedTo) {
-      assignedUser = await User.findOne({
-        username: req.body.assignedTo.trim(),
-      });
-
-      console.log("Username entered:", req.body.assignedTo);
-      console.log("ASSIGNED USER FOUND:", assignedUser);
-    }
-
-    const userId: string | undefined = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
     const task = await Task.create({
-      ...req.body,
-      assignedTo: assignedUser?._id || null,
+      name: req.body.name,
+      status: req.body.status,
+      priority: req.body.priority,
+      dueDate: req.body.dueDate || null,
+      project: req.body.project,
+      assignedTo: req.body.assignedTo || null,
       createdBy: userId,
     });
 
@@ -32,15 +25,13 @@ export const createTask = async (req: any, res: Response) => {
       $inc: { tasks: 1 },
     });
 
-    const populatedTask = await Task.findById(task._id)
-      .populate("project", "name")
-      .populate("assignedTo", "username");
+    const populated = await Task.findById(task._id)
+      .populate("assignedTo", "username email")
+      .populate("project", "name");
 
-    res.status(201).json(populatedTask);
-
+    res.status(201).json(populated);
   } catch (error: any) {
     console.error("CREATE TASK ERROR:", error);
-
     res.status(500).json({
       message: "Task creation failed",
       error: error.message,
@@ -48,27 +39,21 @@ export const createTask = async (req: any, res: Response) => {
   }
 };
 
-  export const getTasks = async (req: any, res: Response) => {
+/**
+ * GET ALL TASKS (USER)
+ */
+export const getTasks = async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
 
     const tasks = await Task.find({
       createdBy: userId,
     })
-      .populate("project", "name")
-      .populate("assignedTo", "username");
-
-    console.log("TASKS:", tasks);
-    console.log("CURRENT USER:", userId);
+      .populate("assignedTo", "username")
+      .populate("project", "name");
 
     res.json(tasks);
   } catch (error: any) {
-    console.error("GET TASKS ERROR:", error);
-
     res.status(500).json({
       message: "Failed to fetch tasks",
       error: error.message,
@@ -82,25 +67,16 @@ export const createTask = async (req: any, res: Response) => {
 export const getTaskByProject = async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     const { projectId } = req.params;
 
     const tasks = await Task.find({
       project: projectId,
       createdBy: userId,
-    })
-      .populate("project", "name")
-      .populate("assignedTo", "username");
+    }).populate("assignedTo", "username");
 
     res.json(tasks);
-    console.log("TASKS FROM DB:", tasks);
   } catch (error: any) {
-    console.error("GET TASK BY PROJECT ERROR:", error);
-
+    console.error(error);
     res.status(500).json({
       message: "Failed to fetch project tasks",
     });
@@ -114,31 +90,22 @@ export const getTaskUpdate = async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     const task = await Task.findOneAndUpdate(
       {
         _id: req.params.id,
         createdBy: userId,
       },
       req.body,
-      {
-        new: true,
-      }
-    );
+      { new: true }
+    ).populate("assignedTo", "username");
 
     if (!task) {
-      return res.status(404).json({
-        message: "Task not found",
-      });
+      return res.status(404).json({ message: "Task not found" });
     }
 
     res.json(task);
   } catch (error: any) {
-    console.error("UPDATE TASK ERROR:", error);
-
+    console.error(error);
     res.status(500).json({
       message: "Task update failed",
       error: error.message,
@@ -153,19 +120,13 @@ export const getTaskDelete = async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
 
-    if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
     const task = await Task.findOne({
       _id: req.params.id,
       createdBy: userId,
     });
 
     if (!task) {
-      return res.status(404).json({
-        message: "Task not found",
-      });
+      return res.status(404).json({ message: "Task not found" });
     }
 
     await Task.findByIdAndDelete(task._id);
@@ -174,18 +135,19 @@ export const getTaskDelete = async (req: any, res: Response) => {
       $inc: { tasks: -1 },
     });
 
-    res.json({
-      message: "Task deleted successfully",
-    });
+    res.json({ message: "Task deleted successfully" });
   } catch (error: any) {
-    console.error("DELETE TASK ERROR:", error);
-
+    console.error(error);
     res.status(500).json({
       message: "Delete failed",
       error: error.message,
     });
   }
 };
+
+/**
+ * GET PROJECT MEMBERS (FIXED FOR YOUR ROUTE)
+ */
 export const getProjectMembers = async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -200,8 +162,9 @@ export const getProjectMembers = async (req: any, res: Response) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    res.json(project.members);
+    res.json(project.members || []);
   } catch (error: any) {
+    console.error("MEMBERS ERROR:", error);
     res.status(500).json({
       message: "Failed to fetch project members",
       error: error.message,

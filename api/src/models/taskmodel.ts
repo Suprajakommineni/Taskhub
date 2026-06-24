@@ -2,11 +2,7 @@ import mongoose from "mongoose";
 
 const taskSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    name: { type: String, required: true, trim: true },
 
     priority: {
       type: String,
@@ -22,7 +18,6 @@ const taskSchema = new mongoose.Schema(
 
     dueDate: {
       type: Date,
-      required: false,
       default: null,
     },
 
@@ -39,10 +34,10 @@ const taskSchema = new mongoose.Schema(
     },
 
     assignedTo: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  default: null,
-}
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true }
 );
