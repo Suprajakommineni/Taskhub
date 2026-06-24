@@ -38,12 +38,7 @@ const projectSchema = new mongoose.Schema(
       type: Date,
     },
 
-    members: [
-  {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-  }
-]
+    members: [String]
   },
   {
     timestamps: true,

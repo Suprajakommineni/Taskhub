@@ -72,9 +72,9 @@ export const getProjectById = async (req: any, res: Response) => {
     const userId = req.user?.id;
 
     const project = await Project.findOne({
-      _id: req.params.id,
-      $or: [{ createdBy: userId }, { members: userId }],
-    }).populate("members", "username email");
+  _id: req.params.id,
+  createdBy: userId,
+});
 
     if (!project) {
       return res.status(404).json({ message: "Project not found" });
@@ -167,38 +167,29 @@ export const getProjectDelete = async (req: any, res: Response) => {
 /**
  * GET PROJECT MEMBERS (FULLY SAFE)
  */
-export const getProjectMembers = async (req: any, res: Response) => {
+export const getProjectMembers = async (
+  req: any,
+  res: Response
+) => {
   try {
     const userId = req.user?.id;
 
     const projects = await Project.find({
       createdBy: userId,
-    })
-      .populate("members", "username email")
-      .lean();
+    }).lean();
 
     const members = projects.flatMap(
-      (project: any) => Array.isArray(project.members)
-        ? project.members
-        : []
+      (p: any) => p.members || []
     );
 
-    const uniqueMembers = Array.from(
-      new Map(
-        members.map((member: any) => [
-          member._id.toString(),
-          member,
-        ])
-      ).values()
-    );
+    const uniqueMembers = [...new Set(members)];
 
     res.json(uniqueMembers);
   } catch (error: any) {
-    console.error("GET PROJECT MEMBERS ERROR:", error);
+    console.error(error);
 
     res.status(500).json({
-      message: "Failed to fetch members",
-      error: error.message,
+      message: error.message,
     });
   }
 };
