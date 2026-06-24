@@ -2,6 +2,24 @@ import { Request, Response } from "express";
 import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
 
+export const getProjectMembers = async (req: any, res: Response) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
+
+    res.json(project.members || []);
+  } catch (error: any) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 /**
  * CREATE TASK
  */

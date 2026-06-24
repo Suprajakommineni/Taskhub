@@ -5,28 +5,30 @@ import {
   getTaskByProject,
   getTaskUpdate,
   getTaskDelete,
+  getProjectMembers,
 } from "../controllers/task";
 import { protect } from "../middleware/authmiddleware";
 
 const router = express.Router();
 
-/**
- * TASK ROUTES ONLY
- */
-
-// Create task
 router.post("/", protect, createTask);
 
-// Get all tasks of logged-in user
 router.get("/", protect, getTasks);
 
-// Get tasks by project
-router.get("/project/:projectId", protect, getTaskByProject);
+router.get(
+  "/project/:projectId",
+  protect,
+  getTaskByProject
+);
 
-// Update task
+router.get(
+  "/project/:projectId/members",
+  protect,
+  getProjectMembers
+);
+
 router.put("/:id", protect, getTaskUpdate);
 
-// Delete task
 router.delete("/:id", protect, getTaskDelete);
 
 export default router;
