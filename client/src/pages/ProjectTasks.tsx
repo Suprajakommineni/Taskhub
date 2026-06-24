@@ -32,6 +32,7 @@ function ProjectTasks() {
   const { projectId } = useParams();
 
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [showModal, setShowModal] = useState(false);
@@ -40,31 +41,38 @@ function ProjectTasks() {
   const [taskTitle, setTaskTitle] = useState("");
   const [status, setStatus] = useState<TaskStatus>("Pending");
   const [priority, setPriority] = useState<TaskPriority>("Medium");
-  const [assignedToName, setAssignedToName] = useState("");
+  const [selectedUserId, setSelectedUserId] = useState("");
   const [dueDate, setDueDate] = useState("");
 
   // FETCH TASKS
   const fetchTasks = async () => {
-  if (!projectId) return;
+    if (!projectId) return;
 
-  try {
-    const res = await taskApi.get(`/project/${projectId}`);
-    console.log("TASK RESPONSE:", res.data);
+    try {
+      const res = await taskApi.get(`/project/${projectId}`);
+      setTasks(Array.isArray(res.data) ? res.data : []);
+    } catch (error) {
+      console.error(error);
+      setTasks([]);
+    }
+  };
 
-    setTasks(Array.isArray(res.data) ? res.data : []);
-  } catch (error: any) {
-    console.error("FETCH TASK ERROR:", error?.response?.data || error.message);
-    setTasks([]); // important fallback
-  }
-};
+  // FETCH MEMBERS
+  const fetchMembers = async () => {
+    try {
+      const res = await taskApi.get(`/project/${projectId}/members`);
+      setMembers(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     const init = async () => {
       setLoading(true);
-      await fetchTasks();
+      await Promise.all([fetchTasks(), fetchMembers()]);
       setLoading(false);
     };
-
     init();
   }, [projectId]);
 
@@ -72,7 +80,7 @@ function ProjectTasks() {
     setTaskTitle("");
     setStatus("Pending");
     setPriority("Medium");
-    setAssignedToName("");
+    setSelectedUserId("");
     setDueDate("");
     setEditingTaskId(null);
   };
@@ -82,79 +90,49 @@ function ProjectTasks() {
     setShowModal(true);
   };
 
- const saveTask = async () => {
-  try {
-    if (!projectId) {
-      alert("Project ID missing");
-      return;
-    }
-
-    if (!taskTitle.trim()) {
-      alert("Task name required");
-      return;
-    }
-
-    const payload = {
-      name: taskTitle.trim(),
-      status,
-      priority,
-      project: projectId,
-      assignedTo: assignedToName.trim(),
-      dueDate: dueDate ? new Date(dueDate) : new Date(),
-    };
-
-    if (editingTaskId) {
-      const res = await taskApi.put(`/${editingTaskId}`, payload);
-
-      setTasks(prev =>
-        prev.map(t =>
-          t._id === editingTaskId ? res.data : t
-        )
-      );
-      console.log("MOBILE DEBUG:", res.data);
-    } else {
-      const res = await taskApi.post("/", payload);
-
-      setTasks(prev => [...prev, res.data]);
-    }
-
-    await fetchTasks();
-
-    resetForm();
-    setShowModal(false);
-
-    window.dispatchEvent(
-      new CustomEvent("dashboard-refresh")
-    );
-
-  } 
-    catch (error: any) {
-  console.error("URL:", error.config?.url);
-  console.error("METHOD:", error.config?.method);
-  console.error("ERROR:", error.response?.data);
-}
-  
-};
-
-  const editTask = (task: Task) => {
+  const openEditModal = (task: Task) => {
     setEditingTaskId(task._id);
     setTaskTitle(task.name);
     setStatus(task.status);
     setPriority(task.priority);
-    setAssignedToName(task.assignedTo?.username || "");
-    setDueDate(
-  task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : ""
-);
+    setSelectedUserId(task.assignedTo?._id || "");
+    setDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
     setShowModal(true);
+  };
+
+  const saveTask = async () => {
+    try {
+      const payload = {
+        name: taskTitle.trim(),
+        status,
+        priority,
+        project: projectId,
+        assignedTo: selectedUserId || null,
+        dueDate: dueDate ? new Date(dueDate) : new Date(),
+      };
+
+      if (editingTaskId) {
+        const res = await taskApi.put(`/${editingTaskId}`, payload);
+        setTasks((prev) =>
+          prev.map((t) => (t._id === editingTaskId ? res.data : t))
+        );
+      } else {
+        const res = await taskApi.post("/", payload);
+        setTasks((prev) => [...prev, res.data]);
+      }
+
+      await fetchTasks();
+      resetForm();
+      setShowModal(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const deleteTask = async (taskId: string) => {
     try {
       await taskApi.delete(`/${taskId}`);
-      window.dispatchEvent(
-  new CustomEvent("dashboard-refresh")
-);
-      await fetchTasks();
+      setTasks((prev) => prev.filter((t) => t._id !== taskId));
     } catch (error) {
       console.error(error);
     }
@@ -169,185 +147,106 @@ function ProjectTasks() {
   }
 
   return (
-    <DashboardLayout
-      title="Project Tasks"
-      subtitle="Manage tasks for this project"
-    >
+    <DashboardLayout title="Project Tasks" subtitle="Manage tasks">
+
       {/* HEADER */}
       <div className="flex justify-between items-center mb-6">
-        <Link
-          to="/tasks"
-          className="flex items-center gap-2 text-slate-600 hover:text-[#0b46bc]"
-        >
+        <Link to="/tasks" className="flex items-center gap-2">
           <ArrowLeft className="w-5 h-5" />
           Back
         </Link>
 
         <button
           onClick={openAddModal}
-          className="bg-[#0b46bc] text-white px-5 py-3 rounded-2xl flex items-center gap-2 hover:bg-[#0334ac]"
+          className="bg-[#0b46bc] text-white px-5 py-3 rounded-2xl flex gap-2"
         >
           <Plus className="w-5 h-5" />
           New Task
         </button>
       </div>
 
-      {/* STATS */}
-      <div className="grid sm:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white rounded-3xl p-6 shadow-sm">
-          <p className="text-slate-500">Total Tasks</p>
-          <h2 className="text-2xl font-bold">{tasks.length}</h2>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-sm">
-          <p className="text-slate-500">Completed</p>
-          <h2 className="text-2xl font-bold">
-            {(Array.isArray(tasks) ? tasks : []).filter(
-  (t) => t.status === "Completed"
-).length}
-          </h2>
-        </div>
-
-        <div className="bg-white rounded-3xl p-6 shadow-sm">
-          <p className="text-slate-500">Running</p>
-          <h2 className="text-2xl font-bold">
-            {(Array.isArray(tasks) ? tasks : []).filter(
-  (t) => t.status !== "Completed"
-).length}
-          </h2>
-        </div>
-      </div>
-
       {/* TASK LIST */}
       <div className="grid gap-5">
-        {(Array.isArray(tasks) ? tasks : []).map((task) => (
-          <div
-            key={task._id}
-            className="bg-white rounded-3xl shadow-sm hover:shadow-md transition p-6 flex justify-between items-center"
-          >
-            <div>
-              <h3 className="text-lg font-bold text-slate-900">
-                {task.name}
-              </h3>
+        {tasks.map((task) => (
+          <div key={task._id} className="p-6 bg-white rounded-3xl">
+            <h3 className="font-bold">{task.name}</h3>
 
-              <div className="flex gap-4 mt-2 text-sm text-slate-500">
-                <span className="flex items-center gap-1">
-                  <User className="w-4 h-4" />
-                  {task.assignedTo?.username || "Unassigned"}
-                </span>
-
-                <span className="flex items-center gap-1">
-                  <Flag className="w-4 h-4" />
-                  {task.priority}
-                </span>
-              </div>
-
-              <p className="text-xs text-slate-400 mt-1">
-                {task.dueDate
-                  ? new Date(task.dueDate).toLocaleDateString()
-                  : "No date"}
-              </p>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <span
-                className={`px-3 py-1 rounded-full text-xs font-bold ${
-                  task.status === "Completed"
-                    ? "bg-green-100 text-green-700"
-                    : task.status === "Running"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-yellow-100 text-yellow-700"
-                }`}
-              >
-                {task.status}
+            <div className="text-sm flex gap-3 mt-2">
+              <span>
+                <User className="inline w-4 h-4" />{" "}
+                {task.assignedTo?.username || "Unassigned"}
               </span>
 
-              <button
-                onClick={() => editTask(task)}
-                className="p-2 bg-blue-50 rounded-xl text-[#0b46bc]"
-              >
-                <Pencil className="w-4 h-4" />
+              <span>
+                <Flag className="inline w-4 h-4" /> {task.priority}
+              </span>
+            </div>
+
+            <p className="text-xs text-gray-400 mt-1">
+              {task.dueDate
+                ? new Date(task.dueDate).toLocaleDateString()
+                : "No date"}
+            </p>
+
+            {/* ACTIONS */}
+            <div className="flex gap-3 mt-3">
+              <button onClick={() => openEditModal(task)}>
+                <Pencil />
               </button>
 
-              <button
-                onClick={() => deleteTask(task._id)}
-                className="p-2 bg-red-50 rounded-xl text-red-500"
-              >
-                <Trash2 className="w-4 h-4" />
+              <button onClick={() => deleteTask(task._id)}>
+                <Trash2 />
               </button>
             </div>
           </div>
         ))}
       </div>
 
-      {/* MODAL (PROJECT STYLE FIXED) */}
+      {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl shadow-xl w-full max-w-lg p-6">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+          <div className="bg-white p-6 rounded-3xl w-full max-w-lg">
 
-            {/* HEADER */}
-            <div className="flex justify-between mb-6">
-              <h2 className="text-2xl font-bold">
-                {editingTaskId ? "Edit Task" : "New Task"}
-              </h2>
-
-              <button
-                onClick={() => setShowModal(false)}
-                className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center"
-              >
-                <X className="w-5 h-5" />
+            <div className="flex justify-between mb-4">
+              <h2>{editingTaskId ? "Edit Task" : "New Task"}</h2>
+              <button onClick={() => setShowModal(false)}>
+                <X />
               </button>
             </div>
 
-            {/* FORM */}
             <input
+              placeholder="Task name"
               value={taskTitle}
               onChange={(e) => setTaskTitle(e.target.value)}
-              className="w-full px-4 py-3 border rounded-2xl mb-3"
-              placeholder="Task name"
+              className="w-full border p-3 mb-3"
             />
 
-            <input
-              value={assignedToName}
-              onChange={(e) => setAssignedToName(e.target.value)}
-              className="w-full px-4 py-3 border rounded-2xl mb-3"
-              placeholder="Assign to username"
-            />
+            <select
+              value={selectedUserId}
+              onChange={(e) => setSelectedUserId(e.target.value)}
+              className="w-full border p-3 mb-3"
+            >
+              <option value="">Assign Member</option>
+              {members.map((m) => (
+                <option key={m._id} value={m._id}>
+                  {m.username}
+                </option>
+              ))}
+            </select>
 
             <input
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full px-4 py-3 border rounded-2xl mb-3"
+              className="w-full border p-3 mb-3"
             />
-
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value as TaskStatus)}
-              className="w-full px-4 py-3 border rounded-2xl mb-3"
-            >
-              <option value="Pending">Pending</option>
-              <option value="Running">Running</option>
-              <option value="Completed">Completed</option>
-            </select>
-
-            <select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value as TaskPriority)}
-              className="w-full px-4 py-3 border rounded-2xl mb-4"
-            >
-              <option value="Low">Low</option>
-              <option value="Medium">Medium</option>
-              <option value="High">High</option>
-            </select>
 
             <button
               onClick={saveTask}
-              className="w-full bg-[#0b46bc] text-white py-3 rounded-2xl font-bold hover:bg-[#0334ac]"
+              className="w-full bg-[#0b46bc] text-white p-3 rounded-2xl"
             >
-              {editingTaskId ? "Update Task" : "Create Task"}
+              Save Task
             </button>
-
           </div>
         </div>
       )}

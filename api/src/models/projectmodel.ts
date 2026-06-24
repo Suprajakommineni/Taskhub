@@ -38,10 +38,12 @@ const projectSchema = new mongoose.Schema(
       type: Date,
     },
 
-    members: {
-  type: [String],
-  default: [],
-},
+    members: [
+  {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  }
+]
   },
   {
     timestamps: true,
