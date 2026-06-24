@@ -28,17 +28,18 @@ const projectSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
     createdBy: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  required: true,
-},
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     dueDate: {
       type: Date,
     },
 
-    members: [String]
+    members: [String],
   },
   {
     timestamps: true,

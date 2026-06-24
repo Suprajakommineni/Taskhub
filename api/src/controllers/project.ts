@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Project from "../models/projectmodel";
 import Task from "../models/taskmodel";
-import User from "../models/usermodel";
+
 
 /**
  * CREATE PROJECT
@@ -11,22 +11,14 @@ export const createProject = async (req: any, res: Response) => {
     const userId = req.user?.id;
 
     if (!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    let memberIds: any[] = [];
-
-    if (req.body.members?.length) {
-      const users = await User.find({
-        username: { $in: req.body.members }
+      return res.status(401).json({
+        message: "Unauthorized",
       });
-
-      memberIds = users.map(user => user._id);
     }
 
     const project = await Project.create({
       ...req.body,
-      members: memberIds,
+      members: req.body.members || [],
       createdBy: userId,
     });
 
@@ -43,41 +35,59 @@ export const createProject = async (req: any, res: Response) => {
 /**
  * GET PROJECTS
  */
-export const getProjects = async (req: any, res: Response) => {
+export const getProjects = async (
+  req: any,
+  res: Response
+) => {
   try {
     const userId = req.user?.id;
 
     const projects = await Project.find({
-      $or: [{ createdBy: userId }, { members: userId }],
+      createdBy: userId,
     });
 
     const result = await Promise.all(
-      projects.map(async (p: any) => {
-        const count = await Task.countDocuments({ project: p._id });
-        return { ...p.toObject(), tasks: count };
+      projects.map(async (project: any) => {
+        const taskCount = await Task.countDocuments({
+          project: project._id,
+        });
+
+        return {
+          ...project.toObject(),
+          tasks: taskCount,
+        };
       })
     );
 
     res.json(result);
   } catch (error: any) {
-    res.status(500).json({ message: "Failed to fetch projects" });
+    console.error(error);
+
+    res.status(500).json({
+      message: "Failed to fetch projects",
+    });
   }
 };
 
 /**
  * GET PROJECT BY ID
  */
-export const getProjectById = async (req: any, res: Response) => {
+export const getProjectById = async (
+  req: any,
+  res: Response
+) => {
   try {
     const userId = req.user?.id;
 
     const project = await Project.findOne({
-  _id: req.params.id,
-  createdBy: userId,
-});
+      _id: req.params.id,
+      createdBy: userId,
+    });
 
     if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+      return res.status(404).json({
+        message: "Project not found",
+      });
     }
 
     res.json(project);
@@ -88,34 +98,25 @@ export const getProjectById = async (req: any, res: Response) => {
     });
   }
 };
-
 /**
  * UPDATE PROJECT (FIXED - SAFE UPDATE)
  */
-export const getProjectUpdate = async (req: any, res: Response) => {
+export const getProjectUpdate = async (
+  req: any,
+  res: Response
+) => {
   try {
     const userId = req.user?.id;
-
-    if (!userId) {
-      return res.status(401).json({
-        message: "Unauthorized",
-      });
-    }
-
-    if (req.body.members) {
-      const users = await User.find({
-        username: { $in: req.body.members }
-      });
-
-      req.body.members = users.map(user => user._id);
-    }
 
     const project = await Project.findOneAndUpdate(
       {
         _id: req.params.id,
         createdBy: userId,
       },
-      req.body,
+      {
+        ...req.body,
+        members: req.body.members || [],
+      },
       {
         new: true,
         runValidators: true,
@@ -142,7 +143,10 @@ export const getProjectUpdate = async (req: any, res: Response) => {
 /**
  * DELETE PROJECT
  */
-export const getProjectDelete = async (req: any, res: Response) => {
+export const getProjectDelete = async (
+  req: any,
+  res: Response
+) => {
   try {
     const userId = req.user?.id;
 
@@ -152,10 +156,14 @@ export const getProjectDelete = async (req: any, res: Response) => {
     });
 
     if (!project) {
-      return res.status(404).json({ message: "Project not found" });
+      return res.status(404).json({
+        message: "Project not found",
+      });
     }
 
-    res.json({ message: "Project deleted successfully" });
+    res.json({
+      message: "Project deleted successfully",
+    });
   } catch (error: any) {
     res.status(500).json({
       message: "Project delete failed",
@@ -179,14 +187,17 @@ export const getProjectMembers = async (
     }).lean();
 
     const members = projects.flatMap(
-      (p: any) => p.members || []
+      (project: any) => project.members || []
     );
 
     const uniqueMembers = [...new Set(members)];
 
     res.json(uniqueMembers);
   } catch (error: any) {
-    console.error(error);
+    console.error(
+      "PROJECT MEMBERS ERROR:",
+      error
+    );
 
     res.status(500).json({
       message: error.message,
