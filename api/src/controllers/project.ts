@@ -82,19 +82,22 @@ export const getProjectUpdate = async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
 
-    const updateData = {
-      ...req.body,
-    };
-
-    delete updateData.createdBy;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
     const project = await Project.findOneAndUpdate(
       {
         _id: req.params.id,
         createdBy: userId,
       },
-      updateData,
-      { new: true }
+      {
+        $set: req.body, // 🔥 IMPORTANT FIX
+      },
+      {
+        new: true,
+        runValidators: true,
+      }
     );
 
     if (!project) {
@@ -142,30 +145,22 @@ export const getProjectDelete = async (req: any, res: Response) => {
 export const getProjectMembers = async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
+    const { projectId } = req.params;
 
-    const projects = await Project.find({
+    const project = await Project.findOne({
+      _id: projectId,
       createdBy: userId,
-    })
-      .populate("members", "username email")
-      .lean();
+    }).populate("members", "username email");
 
-    const members = projects.flatMap((p: any) =>
-      Array.isArray(p.members) ? p.members : []
-    );
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
 
-    const uniqueMembers = [
-      ...new Map(
-        members
-          .filter((m: any) => m?._id)
-          .map((m: any) => [m._id.toString(), m])
-      ).values(),
-    ];
-
-    res.json(uniqueMembers);
+    res.json(project.members || []);
   } catch (error: any) {
     console.error("MEMBERS ERROR:", error);
     res.status(500).json({
-      message: "Server error",
+      message: "Failed to fetch members",
       error: error.message,
     });
   }

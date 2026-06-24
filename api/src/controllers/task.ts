@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
-import User from "../models/usermodel";
 
 /**
  * CREATE TASK
@@ -148,26 +147,3 @@ export const getTaskDelete = async (req: any, res: Response) => {
 /**
  * GET PROJECT MEMBERS (FIXED FOR YOUR ROUTE)
  */
-export const getProjectMembers = async (req: any, res: Response) => {
-  try {
-    const userId = req.user?.id;
-    const { projectId } = req.params;
-
-    const project = await Project.findOne({
-      _id: projectId,
-      createdBy: userId,
-    }).populate("members", "username email");
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    res.json(project.members || []);
-  } catch (error: any) {
-    console.error("MEMBERS ERROR:", error);
-    res.status(500).json({
-      message: "Failed to fetch project members",
-      error: error.message,
-    });
-  }
-};
