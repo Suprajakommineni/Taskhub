@@ -49,14 +49,12 @@ function ProjectTasks() {
 
   try {
     const res = await taskApi.get(`/project/${projectId}`);
+    console.log("TASK RESPONSE:", res.data);
 
-console.log("TASKS:", res.data);
-
-setTasks(Array.isArray(res.data) ? res.data : []);
-
-    
-  } catch (error) {
-    console.error("FETCH TASKS ERROR:", error);
+    setTasks(Array.isArray(res.data) ? res.data : []);
+  } catch (error: any) {
+    console.error("FETCH TASK ERROR:", error?.response?.data || error.message);
+    setTasks([]); // important fallback
   }
 };
 
@@ -101,7 +99,7 @@ setTasks(Array.isArray(res.data) ? res.data : []);
       status,
       priority,
       project: projectId,
-      assignedTo: assignedToName,
+      assignedTo: assignedToName.trim(),
       dueDate: dueDate ? new Date(dueDate) : new Date(),
     };
 
@@ -144,7 +142,9 @@ setTasks(Array.isArray(res.data) ? res.data : []);
     setStatus(task.status);
     setPriority(task.priority);
     setAssignedToName(task.assignedTo?.username || "");
-    setDueDate(task.dueDate ? task.dueDate.split("T")[0] : "");
+    setDueDate(
+  task.dueDate ? new Date(task.dueDate).toISOString().split("T")[0] : ""
+);
     setShowModal(true);
   };
 
