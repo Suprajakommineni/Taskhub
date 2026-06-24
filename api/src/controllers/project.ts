@@ -1,12 +1,11 @@
 import { Request, Response } from "express";
 import Project from "../models/projectmodel";
 import Task from "../models/taskmodel";
-import User from "../models/usermodel";
 
 /**
  * CREATE PROJECT
  */
-export const createTask = async (req: any, res: Response) => {
+export const createProject = async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
 
@@ -14,40 +13,28 @@ export const createTask = async (req: any, res: Response) => {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const task = await Task.create({
+    const project = await Project.create({
       ...req.body,
-      assignedTo: req.body.assignedTo || null, // ✅ directly store userId
       createdBy: userId,
     });
 
-    await Project.findByIdAndUpdate(task.project, {
-      $inc: { tasks: 1 },
-    });
-
-    const populatedTask = await Task.findById(task._id)
-      .populate("project", "name")
-      .populate("assignedTo", "username");
-
-    res.status(201).json(populatedTask);
+    res.status(201).json(project);
   } catch (error: any) {
-    console.error("CREATE TASK ERROR:", error);
-
     res.status(500).json({
-      message: "Task creation failed",
+      message: "Create project failed",
       error: error.message,
     });
   }
 };
+
 /**
  * GET ALL PROJECTS
  */
-export const getProjects = async (req: Request, res: Response) => {
+export const getProjects = async (req: any, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
-    const projects = await Project.find({
-      createdBy: userId,
-    });
+    const projects = await Project.find({ createdBy: userId });
 
     const projectsWithTaskCount = await Promise.all(
       projects.map(async (project) => {
@@ -63,7 +50,7 @@ export const getProjects = async (req: Request, res: Response) => {
     );
 
     res.json(projectsWithTaskCount);
-  } catch (error) {
+  } catch (error: any) {
     res.status(500).json({
       message: "Failed to fetch projects",
     });
@@ -71,11 +58,11 @@ export const getProjects = async (req: Request, res: Response) => {
 };
 
 /**
- * GET PROJECT BY ID (🔥 FIXED - POPULATE MEMBERS)
+ * GET PROJECT BY ID (WITH MEMBERS)
  */
-export const getProjectById = async (req: Request, res: Response) => {
+export const getProjectById = async (req: any, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -102,9 +89,9 @@ export const getProjectById = async (req: Request, res: Response) => {
 /**
  * UPDATE PROJECT
  */
-export const getProjectUpdate = async (req: Request, res: Response) => {
+export const getProjectUpdate = async (req: any, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -132,9 +119,9 @@ export const getProjectUpdate = async (req: Request, res: Response) => {
 /**
  * DELETE PROJECT
  */
-export const getProjectDelete = async (req: Request, res: Response) => {
+export const getProjectDelete = async (req: any, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -159,11 +146,11 @@ export const getProjectDelete = async (req: Request, res: Response) => {
 };
 
 /**
- * GET PROJECT MEMBERS (FIXED & CLEAN)
+ * GET PROJECT MEMBERS (SAFE + CLEAN)
  */
-export const getProjectMembers = async (req: Request, res: Response) => {
+export const getProjectMembers = async (req: any, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -173,11 +160,14 @@ export const getProjectMembers = async (req: Request, res: Response) => {
       .populate("members", "username email")
       .lean();
 
-    const members = projects.flatMap((p: any) => p.members || []);
+    const members = (projects || []).flatMap(
+      (p: any) => p.members || []
+    );
 
-    // remove duplicates properly
     const uniqueMembers = Array.from(
-      new Map(members.map((m: any) => [m._id.toString(), m])).values()
+      new Map(
+        members.map((m: any) => [m._id.toString(), m])
+      ).values()
     );
 
     res.json(uniqueMembers);
