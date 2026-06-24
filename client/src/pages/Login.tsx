@@ -69,7 +69,7 @@ function Login() {
 
               <button type = "submit"
                 
-                className="block w-full text-center bg-[#0b46bc] text-white py-4 rounded-2xl font-bold hover:bg-[#0334ac] transition"
+                className="block w-full text-center bg-[#0b46bc] text-white py-4 rounded-2xl font-bold hover:bg-[#0334ac] transition cursor:pointer"
               >
                 Login
               </button>

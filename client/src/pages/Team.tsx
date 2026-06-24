@@ -7,7 +7,7 @@ import teamApi from "../api/teamapi";
 
 function Team() {
 
-  const [showModal, setShowModal] = useState(false);
+const [showModal, setShowModal] = useState(false);
 const [members, setMembers] = useState<any[]>([]);
 const [username, setUsername] = useState("");
 const [email, setEmail] = useState("");
@@ -16,7 +16,7 @@ const [status, setStatus] = useState("Available");
 
 const saveMember = async () => {
   try {
-    await teamApi.post("/api/team", {
+    await teamApi.post("/", {
       username,
       email,
       role,
@@ -37,15 +37,24 @@ const saveMember = async () => {
   const fetchMembers = async () => {
   try {
     const res = await teamApi.get("/");
-    setMembers(res.data);
+
+    console.log("TEAM RESPONSE:", res.data);
+
+    setMembers(
+      Array.isArray(res.data) ? res.data : []
+    );
+    console.log("MEMBERS STATE:", members);
+console.log("IS ARRAY:", Array.isArray(members));
   } catch (error) {
     console.error(error);
+    setMembers([]); // IMPORTANT fallback
   }
 };
 
 useEffect(() => {
   fetchMembers();
 }, []);
+
 
 
   return (
@@ -63,7 +72,8 @@ useEffect(() => {
   </button>
 </div>
       <div className="grid md:grid-cols-3 xl:grid-cols-4 gap-6">
-        {members.map((member) => {
+        {Array.isArray(members) &&
+  members.map((member) => {
           const assignedProjects: string[] = [];
 
           return (
