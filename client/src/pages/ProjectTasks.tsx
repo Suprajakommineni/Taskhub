@@ -113,6 +113,7 @@ setTasks(Array.isArray(res.data) ? res.data : []);
           t._id === editingTaskId ? res.data : t
         )
       );
+      console.log("MOBILE DEBUG:", res.data);
     } else {
       const res = await taskApi.post("/", payload);
 
