@@ -1,6 +1,6 @@
 import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
-import User from "../models/usersmodel";
+import User from "../models/usermodel";
 import { Request, Response } from "express";
 
 export const getDashboardSummary = async (
