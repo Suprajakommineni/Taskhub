@@ -54,13 +54,7 @@ console.log("TASKS:", res.data);
 
 setTasks(Array.isArray(res.data) ? res.data : []);
 
-    setTasks(
-      Array.isArray(res.data)
-        ? res.data
-        : Array.isArray(res.data.tasks)
-        ? res.data.tasks
-        : []
-    );
+    
   } catch (error) {
     console.error("FETCH TASKS ERROR:", error);
   }
