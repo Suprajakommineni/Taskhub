@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
-import User from "../models/usersmodel";
+import User from "../models/usermodel";
 
 export const createTask = async (req: any, res: Response) => {
   try {
@@ -97,6 +97,7 @@ export const getTaskByProject = async (req: any, res: Response) => {
       .populate("assignedTo", "username");
 
     res.json(tasks);
+    console.log("TASKS FROM DB:", tasks);
   } catch (error: any) {
     console.error("GET TASK BY PROJECT ERROR:", error);
 
