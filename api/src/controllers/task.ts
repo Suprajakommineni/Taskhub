@@ -42,11 +42,10 @@ export const createTask = async (req: any, res: Response) => {
       $inc: { tasks: 1 },
     });
 
-    const populated = await Task.findById(task._id)
-      .populate("assignedTo", "username email")
-      .populate("project", "name");
+    const createdTask = await Task.findById(task._id)
+  .populate("project", "name");
 
-    res.status(201).json(populated);
+res.status(201).json(createdTask);
   } catch (error: any) {
     console.error("CREATE TASK ERROR:", error);
     res.status(500).json({
@@ -64,12 +63,9 @@ export const getTasks = async (req: any, res: Response) => {
     const userId = req.user?.id;
 
     const tasks = await Task.find({
-      createdBy: userId,
-    })
-      .populate("assignedTo", "username")
-      .populate("project", "name");
-
-    res.json(tasks);
+  createdBy: userId,
+}).populate("project", "name");
+res.json(tasks);
   } catch (error: any) {
     res.status(500).json({
       message: "Failed to fetch tasks",
@@ -87,9 +83,9 @@ export const getTaskByProject = async (req: any, res: Response) => {
     const { projectId } = req.params;
 
     const tasks = await Task.find({
-      project: projectId,
-      createdBy: userId,
-    }).populate("assignedTo", "username");
+  project: projectId,
+  createdBy: userId,
+});
 
     res.json(tasks);
   } catch (error: any) {
@@ -108,13 +104,15 @@ export const getTaskUpdate = async (req: any, res: Response) => {
     const userId = req.user?.id;
 
     const task = await Task.findOneAndUpdate(
-      {
-        _id: req.params.id,
-        createdBy: userId,
-      },
-      req.body,
-      { new: true }
-    ).populate("assignedTo", "username");
+  {
+    _id: req.params.id,
+    createdBy: userId,
+  },
+  req.body,
+  {
+    new: true,
+  }
+);
 
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
