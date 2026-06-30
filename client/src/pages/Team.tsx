@@ -32,25 +32,45 @@ function Team() {
 
   // SAVE MEMBER
   const saveMember = async () => {
-    try {
-      await teamApi.post("/", {
-        username,
-        email,
-        role,
-        status,
-      });
+  if (!username.trim()) {
+    return alert("Username is required");
+  }
 
-      fetchMembers();
+  if (!email.trim()) {
+    return alert("Email is required");
+  }
 
-      setUsername("");
-      setEmail("");
-      setRole("");
-      setStatus("Available");
-      setShowModal(false);
-    } catch (error) {
-      console.error(error);
-    }
-  };
+  if (!role.trim()) {
+    return alert("Role is required");
+  }
+
+  try {
+    const res = await teamApi.post("/", {
+      username: username.trim(),
+      email: email.trim(),
+      role: role.trim(),
+      status,
+    });
+
+    console.log("CREATED:", res.data);
+
+    await fetchMembers();
+
+    setUsername("");
+    setEmail("");
+    setRole("");
+    setStatus("Available");
+    setShowModal(false);
+  } catch (err: any) {
+    console.log(err.response?.data);
+
+    alert(
+      err.response?.data?.message ||
+      err.response?.data?.error ||
+      "Failed to create member"
+    );
+  }
+};
 
   // DELETE MEMBER (NEW)
   const deleteMember = async (id: string) => {

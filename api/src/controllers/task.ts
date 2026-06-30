@@ -34,7 +34,7 @@ export const createTask = async (req: any, res: Response) => {
       priority: req.body.priority,
       dueDate: req.body.dueDate || null,
       project: req.body.project,
-      assignedTo: req.body.assignedTo || null,
+      assignedTo: req.body.assignedTo?.trim() || "",
       createdBy: userId,
     });
 

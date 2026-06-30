@@ -1,6 +1,5 @@
 import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
-import User from "../models/usermodel";
 import { Request, Response } from "express";
 
 export const getDashboardSummary = async (
@@ -29,42 +28,39 @@ export const getDashboardSummary = async (
     });
 
     const runningTasks = await Task.countDocuments({
-  createdBy: userId,
-  status: "Running",
-});
-
-    const tasks = await Task.find({
       createdBy: userId,
-      assignedTo: { $ne: null },
+      status: "Running",
+    });
+
+    // Get all assigned usernames
+    const assignedTasks = await Task.find({
+      createdBy: userId,
+      assignedTo: { $exists: true, $ne: "" },
     }).select("assignedTo");
 
-    const memberIds = [
+    // Remove duplicate usernames
+    const teamMembers = [
       ...new Set(
-        tasks
-          .map((t: any) => t.assignedTo?.toString())
+        assignedTasks
+          .map((task: any) => task.assignedTo?.trim())
           .filter(Boolean)
       ),
     ];
 
-    const users = await User.find({
-      _id: { $in: memberIds },
-    }).select("username");
-
-    const usernames = users.map((u) => u.username);
-
-    res.json({
+    res.status(200).json({
       totalProjects,
       totalTasks,
       completedTasks,
       pendingTasks,
       runningTasks,
-      teamMembers: usernames,
+      teamMembers,
     });
-  } catch (err: any) {
-    console.error("Dashboard Summary Error:", err);
+  } catch (error: any) {
+    console.error("Dashboard Summary Error:", error);
 
     res.status(500).json({
-      message: err.message,
+      message: "Failed to fetch dashboard summary",
+      error: error.message,
     });
   }
 };
