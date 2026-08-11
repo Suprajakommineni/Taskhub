@@ -1,15 +1,21 @@
 import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
-import User from "../models/usersmodel";
 import { Request, Response } from "express";
 
-export const getDashboardSummary = async (req: Request, res: Response) => {
+export const getDashboardSummary = async (
+  req: Request,
+  res: Response
+) => {
   try {
     const userId = (req as any).user.id;
 
-    const totalProjects = await Project.countDocuments({ createdBy: userId });
+    const totalProjects = await Project.countDocuments({
+      createdBy: userId,
+    });
 
-    const totalTasks = await Task.countDocuments({ createdBy: userId });
+    const totalTasks = await Task.countDocuments({
+      createdBy: userId,
+    });
 
     const completedTasks = await Task.countDocuments({
       createdBy: userId,
@@ -21,31 +27,42 @@ export const getDashboardSummary = async (req: Request, res: Response) => {
       status: "Pending",
     });
 
-    // STEP 1: get assigned user IDs safely
-    const tasks = await Task.find({
+    const runningTasks = await Task.countDocuments({
       createdBy: userId,
-      assignedTo: { $ne: null },
-    }).select("assignedTo");
+      status: "Running",
+    });
 
-    const memberIds = tasks.map((t) => t.assignedTo);
+    // Get all assigned usernames
+    const assignedTasks = await Task.find({
+  createdBy: userId,
+}).select("assignedTo");
 
-    // STEP 2: get usernames
-    const users = await User.find({
-      _id: { $in: memberIds },
-    }).select("username");
+const teamMembers = [
+  ...new Set(
+    assignedTasks.flatMap((task: any) =>
+      Array.isArray(task.assignedTo)
+        ? task.assignedTo
+            .map((username: string) => username.trim())
+            .filter(Boolean)
+        : []
+    )
+  ),
+];
 
-    const usernames = users.map((u) => u.username);
-
-    res.json({
+    res.status(200).json({
       totalProjects,
       totalTasks,
       completedTasks,
       pendingTasks,
-      teamMembers: usernames, // ✅ ONLY USERNAMES
+      runningTasks,
+      teamMembers,
     });
-  } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+  } catch (error: any) {
+    console.error("Dashboard Summary Error:", error);
+
+    res.status(500).json({
+      message: "Failed to fetch dashboard summary",
+      error: error.message,
+    });
   }
 };
-

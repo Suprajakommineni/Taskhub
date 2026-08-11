@@ -1,6 +1,17 @@
-export type ProjectStatus = "Pending" | "Running" | "Completed";
-export type Priority = "Low" | "Medium" | "High";
+export type ProjectStatus =
+  | "Pending"
+  | "Running"
+  | "Completed";
 
+export type Priority =
+  | "Low"
+  | "Medium"
+  | "High";
+
+export interface Member {
+  username: string;
+  avatar: string;
+}
 
 export type Project = {
   id: string;
@@ -10,6 +21,5 @@ export type Project = {
   progress: number;
   tasks: number;
   dueDate: string;
-  members: string[];
+  members: Member[];
 };
-

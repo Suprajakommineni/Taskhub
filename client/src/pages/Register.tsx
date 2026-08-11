@@ -15,7 +15,7 @@ function Register() {
   e.preventDefault();
 
   try {
-    await API.post("/auth/register", {
+    await API.post("/api/auth/register", {
       username,
       email,
       password,

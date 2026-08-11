@@ -2,150 +2,189 @@ import { Request, Response } from "express";
 import Task from "../models/taskmodel";
 import Project from "../models/projectmodel";
 
-/**
-
-* CREATE TASK
-  */
-  export const createTask = async (req: any, res: Response) => {
+export const getProjectMembers = async (req: any, res: Response) => {
   try {
-  const task = await Task.create({
-  ...req.body,
-  createdBy: req.user.id,
-  });
+    const project = await Project.findById(req.params.projectId);
 
-  await Project.findByIdAndUpdate(task.project, {
-  $inc: { tasks: 1 },
-  });
+    if (!project) {
+      return res.status(404).json({
+        message: "Project not found",
+      });
+    }
 
-  res.status(201).json(task);
+    res.json(project.members || []);
   } catch (error: any) {
-  console.error("CREATE TASK ERROR:", error);
-
-  res.status(500).json({
-  message: "Task creation failed",
-  error: error.message,
-  });
+    res.status(500).json({
+      message: error.message,
+    });
   }
-  };
+};
 
 /**
-
-* GET ALL TASKS OF LOGGED IN USER
-  */
-  export const getTasks = async (req: any, res: Response) => {
-    
+ * CREATE TASK
+ */
+export const createTask = async (req: any, res: Response) => {
   try {
-  const tasks = await Task.find({
-  createdBy: req.user.id,
-  })
-  .populate("project", "name")
-  .populate("assignedTo", "username");
-  
-  console.log(tasks);
-console.log("CURRENT USER:", req.user.id);
+    const userId = req.user?.id;
 
-  res.json(tasks);
+    if (!userId) {
+      return res.status(401).json({
+        message: "Unauthorized",
+      });
+    }
+
+    const task = await Task.create({
+      name: req.body.name,
+      status: req.body.status,
+      priority: req.body.priority,
+      dueDate: req.body.dueDate || null,
+      project: req.body.project,
+      assignedTo: Array.isArray(req.body.assignedTo)
+        ? req.body.assignedTo
+        : [],
+      createdBy: userId,
+    });
+
+    await Project.findByIdAndUpdate(task.project, {
+      $inc: { tasks: 1 },
+    });
+
+    const createdTask = await Task.findById(task._id)
+      .populate("project", "name");
+
+    res.status(201).json(createdTask);
   } catch (error: any) {
-  console.error("GET TASKS ERROR:", error);
+    console.error("CREATE TASK ERROR:", error);
 
-  res.status(500).json({
-  message: "Failed to fetch tasks",
-  error: error.message,
-  });
+    res.status(500).json({
+      message: "Task creation failed",
+      error: error.message,
+    });
   }
-  };
+};
 
 /**
-
-* GET TASKS BY PROJECT
-  */
-  export const getTaskByProject = async (req: any, res: Response) => {
+ * GET ALL TASKS (USER)
+ */
+export const getTasks = async (req: any, res: Response) => {
   try {
-  const { projectId } = req.params;
+    const userId = req.user?.id;
 
-  const tasks = await Task.find({
+    const tasks = await Task.find({
+  createdBy: userId,
+}).populate("project", "name");
+res.json(tasks);
+  } catch (error: any) {
+    res.status(500).json({
+      message: "Failed to fetch tasks",
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * GET TASKS BY PROJECT
+ */
+export const getTaskByProject = async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    const { projectId } = req.params;
+
+    const tasks = await Task.find({
   project: projectId,
-  createdBy: req.user.id,
-  })
-  .populate("project", "name")
-  .populate("assignedTo", "username");
+  createdBy: userId,
+});
 
-  res.json(tasks);
+    res.json(tasks);
   } catch (error: any) {
-  console.error("GET TASK BY PROJECT ERROR:", error);
-
-  res.status(500).json({
-  message: "Failed to fetch project tasks",
-  });
+    console.error(error);
+    res.status(500).json({
+      message: "Failed to fetch project tasks",
+    });
   }
-  };
+};
 
 /**
-
-* UPDATE TASK
-  */
-  export const getTaskUpdate = async (req: any, res: Response) => {
+ * UPDATE TASK
+ */
+/**
+ * UPDATE TASK
+ */
+export const getTaskUpdate = async (req: any, res: Response) => {
   try {
-  const task = await Task.findOneAndUpdate(
-  {
-  _id: req.params.id,
-  createdBy: req.user.id,
-  },
-  req.body,
-  {
-  new: true,
-  }
-  );
+    const userId = req.user?.id;
 
-  if (!task) {
-  return res.status(404).json({
-  message: "Task not found",
-  });
-  }
+    const updateData = {
+      name: req.body.name,
+      status: req.body.status,
+      priority: req.body.priority,
+      dueDate: req.body.dueDate || null,
+      assignedTo: Array.isArray(req.body.assignedTo)
+        ? req.body.assignedTo
+        : [],
+    };
 
-  res.json(task);
+    const task = await Task.findOneAndUpdate(
+      {
+        _id: req.params.id,
+        createdBy: userId,
+      },
+      updateData,
+      {
+        returnDocument: "after", // replaces deprecated new: true
+        runValidators: true,
+      }
+    ).populate("project", "name");
+
+    if (!task) {
+      return res.status(404).json({
+        message: "Task not found",
+      });
+    }
+
+    res.json(task);
   } catch (error: any) {
-  console.error("UPDATE TASK ERROR:", error);
+    console.error("UPDATE TASK ERROR:", error);
 
-  res.status(500).json({
-  message: "Task update failed",
-  error: error.message,
-  });
+    res.status(500).json({
+      message: "Task update failed",
+      error: error.message,
+    });
   }
-  };
+};
 
 /**
-
-* DELETE TASK
-  */
-  export const getTaskDelete = async (req: any, res: Response) => {
+ * DELETE TASK
+ */
+export const getTaskDelete = async (req: any, res: Response) => {
   try {
-  const task = await Task.findOne({
-  _id: req.params.id,
-  createdBy: req.user.id,
-  });
+    const userId = req.user?.id;
 
-  if (!task) {
-  return res.status(404).json({
-  message: "Task not found",
-  });
-  }
+    const task = await Task.findOne({
+      _id: req.params.id,
+      createdBy: userId,
+    });
 
-  await Task.findByIdAndDelete(task._id);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
 
-  await Project.findByIdAndUpdate(task.project, {
-  $inc: { tasks: -1 },
-  });
+    await Task.findByIdAndDelete(task._id);
 
-  res.json({
-  message: "Task deleted successfully",
-  });
+    await Project.findByIdAndUpdate(task.project, {
+      $inc: { tasks: -1 },
+    });
+
+    res.json({ message: "Task deleted successfully" });
   } catch (error: any) {
-  console.error("DELETE TASK ERROR:", error);
-
-  res.status(500).json({
-  message: "Delete failed",
-  error: error.message,
-  });
+    console.error(error);
+    res.status(500).json({
+      message: "Delete failed",
+      error: error.message,
+    });
   }
-  };
+};
+
+/**
+ * GET PROJECT MEMBERS (FIXED FOR YOUR ROUTE)
+ */

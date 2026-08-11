@@ -1,5 +1,23 @@
 import mongoose from "mongoose";
 
+const teamMemberSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    avatar: {
+      type: String,
+      default: "",
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
 const projectSchema = new mongoose.Schema(
   {
     name: {
@@ -28,20 +46,21 @@ const projectSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+
     createdBy: {
-  type: mongoose.Schema.Types.ObjectId,
-  ref: "User",
-  required: true,
-},
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
 
     dueDate: {
       type: Date,
     },
 
     members: {
-  type: [String],
-  default: [],
-},
+      type: [teamMemberSchema],
+      default: [],
+    },
   },
   {
     timestamps: true,
